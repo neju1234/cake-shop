@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🎂 CakePro Ultimate</title>
+<link rel="stylesheet" href="css/style.css">
+<script>
+// Load Chart.js with CDN fallback chain
+(function(){
+  function tryLoad(urls, i) {
+    if (i >= urls.length) return;
+    var s = document.createElement('script');
+    s.src = urls[i];
+    s.onerror = function(){ tryLoad(urls, i+1); };
+    document.head.appendChild(s);
+  }
+  tryLoad([
+    'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
+    'js/chart.min.js'
+  ], 0);
+})();
+</script>
+</head>
+<body>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div id="login-page" class="login-page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="logo-ring">🎂</div>
+        <h1>CakePro</h1>
+        <p>Premium Bakery Management System</p>
+      </div>
+      <div id="login-alert"></div>
+      <div class="fg">
+        <label class="fl">Username</label>
+        <input id="lu" class="fc" type="text" placeholder="admin" autocomplete="username">
+        <div class="inline-err" id="lu-err">Username required</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Password</label>
+        <input id="lp" class="fc" type="password" placeholder="••••••••" autocomplete="current-password">
+        <div class="inline-err" id="lp-err">Password required</div>
+      </div>
+      <button id="login-btn" class="btn btn-primary" style="width:100%;justify-content:center;padding:.82rem;font-size:1rem" onclick="doLogin()">Sign In →</button>
+      <p style="text-align:center;margin-top:1.1rem;color:var(--text2);font-size:.78rem">Default: <strong>admin</strong> / <strong>admin123</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ APP ════════════ -->
+<div id="app" class="app" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand">
+        <div class="brand-ico">🎂</div>
+        <div><h2>CakePro</h2><span>Admin Panel</span></div>
+      </div>
+    </div>
+    <nav class="nav-scroll">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" data-page="dashboard"  onclick="go('dashboard')" ><span class="nav-icon">🏠</span>Dashboard</div>
+      <div class="nav-label">Catalogue</div>
+      <div class="nav-item" data-page="cakes"             onclick="go('cakes')"     ><span class="nav-icon">🎂</span>Cakes</div>
+      <div class="nav-label">Business</div>
+      <div class="nav-item" data-page="orders"            onclick="go('orders')"    ><span class="nav-icon">📦</span>Orders<span class="nav-badge" id="nb-pending" style="display:none">0</span></div>
+      <div class="nav-item" data-page="customers"         onclick="go('customers')" ><span class="nav-icon">👥</span>Customers</div>
+      <div class="nav-label">Insights</div>
+      <div class="nav-item" data-page="analytics"         onclick="go('analytics')" ><span class="nav-icon">📊</span>Analytics</div>
+      <div class="nav-item" data-page="reports"           onclick="go('reports')"   ><span class="nav-icon">📋</span>Sales Reports</div>
+      <div class="nav-item" data-page="promotions"        onclick="go('promotions')"><span class="nav-icon">🏷️</span>Promotions</div>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="logout-btn" onclick="doLogout()"><span>🚪</span>Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="ham-btn" onclick="toggleSidebar()">☰</button>
+        <div><h1 id="page-title">Dashboard</h1><p id="page-sub">Overview of your bakery</p></div>
+      </div>
+      <div class="topbar-right">
+        <span id="top-date" style="font-size:.78rem;color:var(--text2)"></span>
+        <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        <div class="avatar" id="top-avatar">A</div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard"><div id="dash-body"></div></div>
+
+      <!-- CAKES -->
+      <div class="page" id="page-cakes">
+        <div class="fbar">
+          <div class="search-wrap" style="max-width:300px">
+            <span class="si">🔍</span>
+            <input class="fc" id="cake-q" placeholder="Search cakes…" oninput="dbounce(loadCakes,380)()">
+          </div>
+          <select class="fc" id="cake-cat" style="width:auto" onchange="loadCakes()">
+            <option value="">All Categories</option>
+            <option value="birthday">Birthday</option><option value="wedding">Wedding</option>
+            <option value="anniversary">Anniversary</option><option value="custom">Custom</option>
+            <option value="cupcakes">Cupcakes</option><option value="cheesecake">Cheesecake</option>
+            <option value="pastry">Pastry</option><option value="other">Other</option>
+          </select>
+          <select class="fc" id="cake-sort" style="width:auto" onchange="loadCakes()">
+            <option value="">Sort: Newest</option>
+            <option value="price_asc">Price ↑</option><option value="price_desc">Price ↓</option>
+            <option value="popular">Most Viewed</option><option value="bestseller">Best Seller</option>
+          </select>
+          <span id="cake-cnt" style="color:var(--text2);font-size:.83rem;margin-left:auto"></span>
+          <button class="btn btn-sec btn-sm" onclick="exportCakes('csv')">⬇ CSV</button>
+          <button class="btn btn-sec btn-sm" onclick="exportCakes('excel')">⬇ Excel</button>
+          <button class="btn btn-primary" onclick="openAddCake()">+ Add Cake</button>
+        </div>
+        <div class="cake-grid" id="cake-grid"></div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="page" id="page-orders">
+        <div class="fbar">
+          <select class="fc" id="ord-status" style="width:auto" onchange="loadOrders()">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option><option value="confirmed">Confirmed</option>
+            <option value="preparing">Preparing</option><option value="ready">Ready</option>
+            <option value="delivered">Delivered</option><option value="cancelled">Cancelled</option>
+          </select>
+          <input class="fc" id="ord-from" type="date" style="width:auto" onchange="loadOrders()">
+          <input class="fc" id="ord-to"   type="date" style="width:auto" onchange="loadOrders()">
+          <button class="btn btn-ghost btn-sm" onclick="resetOrdFilters()">✕ Reset</button>
+          <span id="ord-cnt" style="color:var(--text2);font-size:.83rem;margin-left:auto"></span>
+          <button class="btn btn-sec btn-sm" onclick="exportOrders('csv')">⬇ CSV</button>
+          <button class="btn btn-sec btn-sm" onclick="exportOrders('excel')">⬇ Excel</button>
+          <button class="btn btn-primary" onclick="openNewOrder()">+ New Order</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>Disc</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="ord-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="page" id="page-customers">
+        <div class="fbar">
+          <div class="search-wrap" style="max-width:320px">
+            <span class="si">🔍</span>
+            <input class="fc" id="cust-q" placeholder="Search name, email, phone…" oninput="dbounce(loadCustomers,380)()">
+          </div>
+          <span id="cust-cnt" style="color:var(--text2);font-size:.83rem;margin-left:auto"></span>
+          <button class="btn btn-sec btn-sm" onclick="exportCustomersCSV()">⬇ CSV</button>
+          <button class="btn btn-primary" onclick="openAddCust()">+ Add Customer</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Spent</th><th>Orders</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="cust-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div class="page" id="page-analytics"><div id="analytics-body"></div></div>
+
+      <!-- REPORTS -->
+      <div class="page" id="page-reports">
+        <div class="fbar" style="margin-bottom:1.75rem">
+          <button class="btn btn-sec" onclick="loadReport('daily')">📅 Today</button>
+          <button class="btn btn-sec" onclick="loadReport('monthly')">🗓 This Month</button>
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+            <input class="fc" id="rpt-from" type="date" style="width:auto">
+            <span style="color:var(--text2)">→</span>
+            <input class="fc" id="rpt-to"   type="date" style="width:auto">
+            <button class="btn btn-primary" onclick="loadReport('custom')">🔍 Search</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="resetRptFilters()">✕ Reset</button>
+        </div>
+        <div id="rpt-body"><div class="empty"><div class="ei">📋</div><h3>Generate a Report</h3><p>Select a period above</p></div></div>
+      </div>
+
+      <!-- PROMOTIONS -->
+      <div class="page" id="page-promotions">
+        <div class="fbar">
+          <span style="color:var(--text2);font-size:.875rem">Manage discount codes &amp; offers</span>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="openAddPromo()">+ Create Promo</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Code</th><th>Description</th><th>Type</th><th>Value</th><th>Min Order</th><th>Expires</th><th>Used</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="promo-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ════════════ MODALS ════════════ -->
+
+<!-- Confirm -->
+<div class="overlay" id="confirm-overlay">
+  <div class="modal" style="max-width:400px">
+    <div class="mhead"><h3>⚠️ Confirm</h3></div>
+    <div class="mbody"><p id="confirm-msg" style="color:var(--text2);padding-bottom:.5rem"></p></div>
+    <div class="mfoot"><button class="btn btn-sec" id="conf-no">Cancel</button><button class="btn btn-danger" id="conf-yes">Delete</button></div>
+  </div>
+</div>
+
+<!-- Cake Form -->
+<div class="overlay" id="cake-overlay">
+  <div class="modal modal-lg">
+    <div class="mhead"><h3 id="cake-modal-title">Add Cake</h3><button class="mclose" onclick="closeM('cake-overlay')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Cake Name *</label><input id="cf-name" class="fc" placeholder="e.g. Chocolate Fudge" required><div class="inline-err" id="cf-name-err">Min 3 characters</div></div>
+        <div class="fg"><label class="fl">Category *</label>
+          <select id="cf-cat" class="fc" required>
+            <option value="">— Select —</option>
+            <option value="birthday">Birthday</option><option value="wedding">Wedding</option>
+            <option value="anniversary">Anniversary</option><option value="custom">Custom</option>
+            <option value="cupcakes">Cupcakes</option><option value="cheesecake">Cheesecake</option>
+            <option value="pastry">Pastry</option><option value="other">Other</option>
+          </select>
+          <div class="inline-err" id="cf-cat-err">Category required</div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Description *</label><textarea id="cf-desc" class="fc" placeholder="Describe this cake… (max 500 chars)" maxlength="500" required></textarea><div class="inline-err" id="cf-desc-err">Description required</div></div>
+      <div class="frow3">
+        <div class="fg"><label class="fl">Price (₹) *</label><input id="cf-price" class="fc" type="number" placeholder="850" min="1" step="0.01" required><div class="inline-err" id="cf-price-err">Valid price required</div></div>
+        <div class="fg"><label class="fl">Discount %</label><input id="cf-disc" class="fc" type="number" placeholder="0" min="0" max="100" value="0"></div>
+        <div class="fg"><label class="fl">Available</label><select id="cf-avail" class="fc"><option value="true">✅ Yes</option><option value="false">❌ No</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Allergy Info (comma-separated)</label><input id="cf-allergy" class="fc" placeholder="e.g. nuts, dairy, gluten"><p style="font-size:.72rem;color:var(--text2);margin-top:.3rem">Options: nuts · dairy · gluten · eggs · soy · wheat · none</p></div>
+      <div class="fg">
+        <label class="fl">Cake Image (JPG/PNG, max 2MB)</label>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('cf-img').click()" ondragover="doDragOver(event)" ondrop="doDrop(event)">
+          <img id="img-preview" class="drop-preview" alt="Preview">
+          <div class="drop-text">📸 <span>Click to upload</span> or drag &amp; drop</div>
+          <input type="file" id="cf-img" accept="image/jpeg,image/png,image/webp">
+        </div>
+        <div class="inline-err" id="cf-img-err">Image too large (max 2MB)</div>
+      </div>
+    </div>
+    <div class="mfoot"><button class="btn btn-sec" onclick="closeM('cake-overlay')">Cancel</button><button class="btn btn-primary" id="cake-save-btn" onclick="saveCake()">Save Cake</button></div>
+  </div>
+</div>
+
+<!-- Customer Form -->
+<div class="overlay" id="cust-overlay">
+  <div class="modal">
+    <div class="mhead"><h3 id="cust-modal-title">Add Customer</h3><button class="mclose" onclick="closeM('cust-overlay')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Full Name *</label><input id="custf-name" class="fc" placeholder="Priya Sharma" required><div class="inline-err" id="custf-name-err">Name required</div></div>
+        <div class="fg"><label class="fl">Email *</label><input id="custf-email" class="fc" type="email" placeholder="priya@example.com" required><div class="inline-err" id="custf-email-err">Valid email required</div></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Phone * (10 digits)</label><input id="custf-phone" class="fc" placeholder="9876543210" maxlength="10" required><div class="inline-err" id="custf-phone-err">10-digit phone required</div></div>
+        <div class="fg"><label class="fl">Address</label><input id="custf-addr" class="fc" placeholder="City, State"></div>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea id="custf-notes" class="fc" placeholder="Any special preferences…" style="min-height:68px"></textarea></div>
+    </div>
+    <div class="mfoot"><button class="btn btn-sec" onclick="closeM('cust-overlay')">Cancel</button><button class="btn btn-primary" id="cust-save-btn" onclick="saveCust()">Save Customer</button></div>
+  </div>
+</div>
+
+<!-- View Customer -->
+<div class="overlay" id="view-cust-overlay">
+  <div class="modal modal-lg">
+    <div class="mhead"><h3>Customer Profile</h3><button class="mclose" onclick="closeM('view-cust-overlay')">✕</button></div>
+    <div class="mbody" id="view-cust-body"></div>
+    <div class="mfoot"><button class="btn btn-sec" onclick="closeM('view-cust-overlay')">Close</button></div>
+  </div>
+</div>
+
+<!-- New Order -->
+<div class="overlay" id="order-overlay">
+  <div class="modal modal-xl">
+    <div class="mhead"><h3>🛒 New Order</h3><button class="mclose" onclick="closeM('order-overlay')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Customer *</label><select id="ord-cust" class="fc" required></select><div class="inline-err" id="ord-cust-err">Select a customer</div></div>
+        <div class="fg"><label class="fl">Payment Method</label>
+          <select id="ord-pay" class="fc">
+            <option value="cash">💵 Cash</option><option value="card">💳 Card</option>
+            <option value="upi">📱 UPI</option><option value="online">🌐 Online</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:var(--surface);border-radius:var(--r-sm);padding:1rem;margin-bottom:1rem">
+        <p class="fl" style="margin-bottom:.75rem">Add Items</p>
+        <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:2;min-width:200px"><select id="ord-cake-sel" class="fc"></select></div>
+          <div style="width:88px"><input id="ord-qty" class="fc" type="number" value="1" min="1" placeholder="Qty"></div>
+          <button class="btn btn-sec" onclick="addItem()">+ Add</button>
+        </div>
+      </div>
+      <div id="ord-items-list" style="min-height:50px;margin-bottom:1rem"></div>
+      <div style="display:flex;gap:.75rem;margin-bottom:.5rem;align-items:flex-end">
+        <div style="flex:1"><label class="fl">Promo Code</label><input id="ord-promo" class="fc" placeholder="e.g. WELCOME10" style="text-transform:uppercase"></div>
+        <button class="btn btn-sec" onclick="applyPromo()">Apply</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearPromo()">Clear</button>
+      </div>
+      <div id="promo-msg" style="margin-bottom:1rem"></div>
+      <div style="background:var(--surface);border-radius:var(--r-sm);padding:1rem;margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.875rem"><span style="color:var(--text2)">Subtotal</span><span id="ord-sub">₹0.00</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.875rem"><span style="color:var(--text2)">Promo Discount</span><span id="ord-disc" style="color:var(--success)">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--gold);font-size:1.05rem;border-top:1px solid var(--border);padding-top:.65rem;margin-top:.5rem"><span>Total</span><span id="ord-total">₹0.00</span></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Delivery Date</label><input id="ord-delivery" class="fc" type="date"></div>
+        <div class="fg"><label class="fl">Notes</label><input id="ord-notes" class="fc" placeholder="Special instructions…"></div>
+      </div>
+    </div>
+    <div class="mfoot"><button class="btn btn-sec" onclick="closeM('order-overlay')">Cancel</button><button class="btn btn-primary" id="ord-save-btn" onclick="saveOrder()">Place Order</button></div>
+  </div>
+</div>
+
+<!-- Bill / Invoice Modal -->
+<div class="overlay" id="invoice-overlay">
+  <div class="modal modal-lg">
+    <div class="mhead no-print">
+      <h3>🧾 Bill / Receipt</h3>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="printBill()">🖨️ Print A4 Bill</button>
+        <button class="btn btn-sec btn-sm"     onclick="printThermal()">🧾 Thermal (80mm)</button>
+        <button class="mclose" onclick="closeM('invoice-overlay')">✕</button>
+      </div>
+    </div>
+    <div class="mbody" id="invoice-body" style="padding:1.25rem 1.5rem"></div>
+    <div class="mfoot no-print" style="justify-content:space-between;align-items:center">
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-primary btn-sm" onclick="printBill()">🖨️ Print A4 Bill</button>
+        <button class="btn btn-sec btn-sm"     onclick="printThermal()">🧾 Thermal Receipt</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeM('invoice-overlay')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Promo Form -->
+<div class="overlay" id="promo-overlay">
+  <div class="modal">
+    <div class="mhead"><h3 id="promo-modal-title">Create Promotion</h3><button class="mclose" onclick="closeM('promo-overlay')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Promo Code *</label><input id="pf-code" class="fc" placeholder="WELCOME10" style="text-transform:uppercase" required><div class="inline-err" id="pf-code-err">Code required</div></div>
+        <div class="fg"><label class="fl">Active</label><select id="pf-active" class="fc"><option value="true">✅ Active</option><option value="false">❌ Inactive</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Description</label><input id="pf-desc" class="fc" placeholder="10% off for new customers"></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Type *</label><select id="pf-type" class="fc" required><option value="percentage">Percentage (%)</option><option value="fixed">Fixed Amount (₹)</option></select></div>
+        <div class="fg"><label class="fl">Value *</label><input id="pf-val" class="fc" type="number" placeholder="10" min="0" required><div class="inline-err" id="pf-val-err">Value required</div></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Min Order (₹)</label><input id="pf-min" class="fc" type="number" placeholder="0" min="0" value="0"></div>
+        <div class="fg"><label class="fl">Max Discount (₹)</label><input id="pf-max" class="fc" type="number" placeholder="No cap" min="0"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Usage Limit</label><input id="pf-limit" class="fc" type="number" placeholder="Unlimited" min="1"></div>
+        <div class="fg"><label class="fl">Expires On *</label><input id="pf-exp" class="fc" type="date" required><div class="inline-err" id="pf-exp-err">Future date required</div></div>
+      </div>
+    </div>
+    <div class="mfoot"><button class="btn btn-sec" onclick="closeM('promo-overlay')">Cancel</button><button class="btn btn-primary" id="promo-save-btn" onclick="savePromo()">Save Promo</button></div>
+  </div>
+</div>
+
+<div id="sb-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99" onclick="closeSidebar()"></div>
+<div id="toasts"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/cakes.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/orders.js"></script>
+<script src="js/promotions.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
